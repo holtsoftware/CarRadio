@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Device.Gpio;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Shutdown
@@ -19,29 +20,47 @@ namespace Shutdown
 
 			controller.OpenPin(offPin1, PinMode.InputPullDown);
 
-			controller.RegisterCallbackForPinValueChangedEvent(offPin1, PinEventTypes.Falling, (sender, args) =>
+			using var source = new CancellationTokenSource();
+			var cancelationToken = source.Token;
+
+			void callback(object sender, PinValueChangedEventArgs args)
 			{
 				Console.WriteLine("PinChanged");
-				if(args.ChangeType == PinEventTypes.Falling)
+				if (args.ChangeType == PinEventTypes.Falling)
 				{
 					if (!isShutingDown)
 					{
+						Console.WriteLine("Shutdown Requested");
 						isShutingDown = true;
-						Console.WriteLine("Shutting Down");
-						var processStartInfo = new ProcessStartInfo("shutdown", "-h now");
-						var process = Process.Start(processStartInfo);
-
-						process.WaitForExit();
 						stop = true;
+						source.Cancel();
 					}
 				}
-			});
+			}
+
+			Console.WriteLine("Register call back");
+			controller.RegisterCallbackForPinValueChangedEvent(offPin1, PinEventTypes.Falling, callback);
 
 			while(!stop)
 			{
 				Console.WriteLine($"Tick {DateTimeOffset.Now}");
-				await Task.Delay(timeDelay);
+				try
+				{
+					await Task.Delay(timeDelay, cancelationToken);
+				}
+				catch { Console.WriteLine("Cancelation Exception"); }
 			}
+
+			shutdown();
+
+		}
+
+		private static void shutdown()
+		{
+			Console.WriteLine("Shutting Down");
+			var processStartInfo = new ProcessStartInfo("init", "0");
+			processStartInfo.UseShellExecute = true;
+			Process.Start(processStartInfo);
 		}
 	}
 }

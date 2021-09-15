@@ -41,22 +41,17 @@ def tapKey(key):
 def checkOne(num):
     print(num)
     if num > 39000 and num < 39999:
-        print("volume down")
         tapKey(Keycode.F7)
     elif num > 55000 and num < 56999:
-        print("next")
         tapKey(Keycode.N)
 
 
 def checkThree(num):
     if num > 39000 and num < 39999:
-        print("volume up")
         tapKey(Keycode.F8)
     elif num > 55000 and num < 56999:
-        print("mode")
         tapKey(Keycode.P)
     elif num > 65000 and num < 66999:
-        print("previous")
         tapKey(Keycode.V)
 
 def readValues():
@@ -87,7 +82,6 @@ def readValues():
         checkThree(average)
 
 time.sleep(1)
-print("starting keyboard loop")
 while True:
     readValues()
     #time.sleep(0.01)
