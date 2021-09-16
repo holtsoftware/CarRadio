@@ -41,6 +41,22 @@ namespace Shutdown
 			Console.WriteLine("Register call back");
 			controller.RegisterCallbackForPinValueChangedEvent(offPin1, PinEventTypes.Falling, callback);
 
+			var task = Task.Run(async () =>
+			{
+				while(!stop)
+				{
+					if(controller.Read(offPin1) == PinValue.Low && !isShutingDown)
+					{
+						Console.WriteLine("Shutdown Requested");
+						isShutingDown = true;
+						stop = true;
+						source.Cancel();
+					}
+					
+					await Task.Delay(10000);
+				}
+			});
+
 			while(!stop)
 			{
 				Console.WriteLine($"Tick {DateTimeOffset.Now}");
